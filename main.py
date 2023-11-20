@@ -14,7 +14,7 @@ class Suprematism(QWidget):
         self.setMouseTracking(True)
         self.coords_ = []
         self.qp = QPainter()
-        self.flag = False
+        self.flag = 'False'
         self.status = None
 
     def drawf(self):
