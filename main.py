@@ -14,7 +14,7 @@ class Suprematism(QWidget):
         self.setMouseTracking(True)
         self.coords_ = []
         self.qp = QPainter()
-        self.flag = 'False'
+        self.flag = False
         self.status = None
 
     def drawf(self):
@@ -31,25 +31,9 @@ class Suprematism(QWidget):
     def draw(self, status):
         if status == 1:
             R = randint(20, 100)
-            self.qp.setBrush(QColor(*[randint(0, 255) for _ in range(3)]))
+            self.qp.setBrush(QColor(255, 255, 0))
             self.qp.drawEllipse(int(self.coords_[0] - R / 2),
                                 int(self.coords_[1] - R / 2), R, R)
-        elif status == 2:
-            A = randint(20, 100)
-            self.qp.setBrush(QColor(*[randint(0, 255) for _ in range(3)]))
-            self.qp.drawRect(int(self.coords_[0] - A / 2),
-                             int(self.coords_[1] - A / 2), A, A)
-        elif status == 3:
-            x, y = self.coords_
-            A = randint(20, 100)
-
-            coords = [QPoint(x, y - A),
-                      QPoint(int(x + cos(7 * pi / 6) * A),
-                             int(y - sin(7 * pi / 6) * A)),
-                      QPoint(int(x + cos(11 * pi / 6) * A),
-                             int(y - sin(11 * pi / 6) * A))]
-            self.qp.setBrush(QColor(*[randint(0, 255) for _ in range(3)]))
-            self.qp.drawPolygon(coords)
 
     def initUI(self):
         self.setGeometry(300, 300, 1000, 1000)
@@ -59,8 +43,6 @@ class Suprematism(QWidget):
         self.coords_ = [event.x(), event.y()]
         if (event.button() == Qt.LeftButton):
             self.status = 1
-        elif (event.button() == Qt.RightButton):
-            self.status = 2
         self.drawf()
 
     def mouseMoveEvent(self, event):
