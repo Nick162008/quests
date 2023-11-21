@@ -1,30 +1,28 @@
+import sqlite3
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout
-from PyQt5.QtGui import QPainter, QPixmap, QPen, QColor
-from PyQt5 import uic
-from random import randint
-from ui_ui import Ui_MainWindow
+from PyQt5 import uic, Qt
+from main_ui import Ui_MainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
 
 
 class Test(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
-        self.pushButton.clicked.connect(self.circle)
-        canvas = QPixmap(500, 500)
-        self.label.setPixmap(canvas)
+        uic.loadUi('main.ui', self)
+        self.con = sqlite3.connect('coffe.sqlite.db')
+        self.cur = self.con.cursor()
+        self.table()
 
-    def circle(self):
-        x, y = [randint(10, 490) for i in range(2)]
-        a = randint(10, 80)
-        painter = QPainter(self.label.pixmap())
-        pen = QPen()
-        pen.setWidth(2)
-        pen.setColor(QColor(QColor(*[randint(0, 255) for _ in range(3)])))
-        painter.setPen(pen)
-        painter.drawEllipse(x, y, a, a)
-        painter.end()
-        self.update()
+    def table(self):
+        cur = self.con.cursor()
+        result = cur.execute("""select name_sort, stepen_fire, vid_coffe, opicane, cost, obem from coffes""").fetchall()
+        self.tableWidget.setRowCount(len(result))
+        self.tableWidget.setColumnCount(len(result[0]))
+        self.tableWidget.setHorizontalHeaderLabels(
+            ["Название сорта", "Степень прожарки", "Вид коффе", "Описание", "Цена", "Объем"])
+        for i, elem in enumerate(result):
+            for j, val in enumerate(elem):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(val)))
 
 
 if __name__ == '__main__':
