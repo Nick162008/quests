@@ -1,46 +1,43 @@
 import pygame
 
-
-def sphere(screen):
-    screen.fill(pygame.Color('white'))
-    y1 = n / 2
-    y2 = 0
-    y3 = n / 2
-    y4 = n
-
-    x1 = 0
-    x2 = n / 2
-    x3 = n
-    x4 = n / 2
-    count = width / n
-    for i in range(int(count)):
-        for g in range(int(count)):
-            pygame.draw.polygon(screen, (pygame.Color("orange")), [[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
-            x1 += n
-            x2 += (n / 2) * 2
-            x3 += n
-            x4 += (n / 2) * 2
-        y1 += (n / 2) * 2
-        y2 += n
-        y3 += (n / 2) * 2
-        y4 += n
-
-        x1 = 0
-        x2 = n / 2
-        x3 = n
-        x4 = n / 2
-
-
 if __name__ == '__main__':
-    # инициализация Pygame:
     pygame.init()
-    size = width, height = 300, 300
-    n = int(input())
+    pygame.display.set_caption('Движущийся круг 2')
+    size = width, height = 800, 400
     screen = pygame.display.set_mode(size)
-    sphere(screen)
-    pygame.display.flip()
-    # ожидание закрытия окна:
-    while pygame.event.wait().type != pygame.QUIT:
-        pass
-    # завершение работы:
-    pygame.quit()
+
+    running = True
+    x_pos = 0
+    v = 20  # пикселей в секунду
+    clock = pygame.time.Clock()
+    screen2 = pygame.Surface(screen.get_size())
+    x1, y1, w, h = 0, 0, 0, 0
+    drawing = False  # режим рисования выключен
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z and \
+                        (event.mod & pygame.KMOD_CTRL):
+                    screen1.
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                drawing = True  # включаем режим рисования
+                # запоминаем координаты одного угла
+                x1, y1 = event.pos
+            if event.type == pygame.MOUSEBUTTONUP:
+                # сохраняем нарисованное (на втором холсте)
+                screen2.blit(screen, (0, 0))
+                drawing = False
+                x1, y1, w, h = 0, 0, 0, 0
+            if event.type == pygame.MOUSEMOTION:
+                # запоминаем текущие размеры
+                if drawing:
+                    w, h = event.pos[0] - x1, event.pos[1] - y1
+        # рисуем на экране сохранённое на втором холсте
+        screen.fill(pygame.Color('black'))
+        screen.blit(screen2, (0, 0))
+        if drawing:  # и, если надо, текущий прямоугольник
+            if w > 0 and h > 0:
+                pygame.draw.rect(screen, (0, 0, 255), ((x1, y1), (w, h)), 5)
+        pygame.display.flip()
