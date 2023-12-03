@@ -17,10 +17,10 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_z and \
-                        (event.mod & pygame.KMOD_CTRL):
-                    screen1.
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z and (event.mod & pygame.KMOD_CTRL):
+                    pygame.display.flip()
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 drawing = True  # включаем режим рисования
                 # запоминаем координаты одного угла
