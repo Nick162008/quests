@@ -1,0 +1,5 @@
+import sys
+from PyQt5 import uic, Qt
+from main_ui import Ui_MainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem
+
