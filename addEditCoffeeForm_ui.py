@@ -1,67 +1,187 @@
+# чтобы выставить свое поле NxN клеток в начале выполнения кода введите в ширину сколько клеток и в высоту через строчку 
+import random
+
 import pygame
 import itertools
 
 
-class vent:
+class Board:
     # создание поля
     def __init__(self, width, height):
-        self.x = width // 2
-        self.y = height // 2
-        self.x11 = self.x - 15
-        self.y11 = self.x - 65
-        self.x12 = self.x + 15
-        self.y12 = self.x - 65
-        self.v = 0
+        self.width = width
+        self.height = height
+        self.sp = [2, 4]
+        count = 0
+        self.board = [[0] * width for _ in range(height)]
+        for y in range(height):
+            for x in range(width):
+                if count < 2 and random.randint(0, 1) == 0:
+                    self.board[y][x] = self.sp[random.randint(0, 1)]
+                    count += 1
+        # значения по умолчанию
+        self.left = 10
+        self.top = 20
+        self.cell_size = 50
+        self.count = 0
+        with open('best_score.txt', 'r', encoding='utf-8') as file:
+            text = file.read()
+        self.best_score = int(text)
+        print(self.best_score)
+        self.score = 0
 
     def render(self, screen):
-        pygame.draw.circle(screen, pygame.Color("white"), (self.x, self.y), 10)
-        if 20 <= self.x11 <= self.x and 20 <= self.y11 <= self.y:
-            self.x11 += 1
-            self.y11 -= 1
-        if self.x <= self.x11 <= 181 and 20 <= self.y11 <= self.y:
-            self.x11 -= 1
-            self.y11 -= 1
-        if self.x <= self.x11 <= 181 and self.y <= self.y11 <= 181:
-            self.x11 += 1
-            self.y11 -= 1
-        if 20 <= self.x11 <= self.x and self.y <= self.y11 <= 181:
-            self.x11 += 1
-            self.y11 += 1
+        colors = [pygame.Color("black"), pygame.Color("red"), pygame.Color("blue")]
+        for x, y in itertools.product(range(self.width), range(self.height)):
+            pygame.draw.rect(screen, pygame.Color("white"), (
+                x * self.cell_size + 5, y * self.cell_size + 5, self.cell_size,
+                self.cell_size), 1)
+            font = pygame.font.Font(None, 30)
+            if self.board[y][x] != 0:
+                text = font.render(f"{self.board[y][x]}", True, (255, 255, 255))
+                screen.blit(text, (x * self.cell_size + 20, y * self.cell_size + 13, self.cell_size,
+                                   self.cell_size))
+            text = font.render(f"Счёт: {self.score}", False, (255, 255, 255))
+            screen.blit(text, (50 * self.width + 10, 5, 10,
+                               10))
+            text = font.render(f"Лучший счёт: {self.best_score}", False, (255, 255, 255))
+            screen.blit(text, (50 * self.width + 10, 30, 10,
+                               10))
 
-        if 20 <= self.x12 <= self.x and 20 <= self.y12 <= self.y:
-            self.x12 -= 1
-            self.y12 += 1
-        if self.x <= self.x12 <= 181 and 20 <= self.y12 <= self.y:
-            self.x12 += 1
-            self.y12 += 1
-        if self.x <= self.x12 <= 181 and self.y <= self.y12 <= 181:
-            self.x12 -= 1
-            self.y12 += 1
-        if 20 <= self.x12 <= self.x and self.y <= self.y12 <= 181:
-            self.x12 -= 1
-            self.y12 -= 1
-        pygame.draw.polygon(screen, pygame.Color("white"),
-                            [[self.x, self.y], [self.x11, self.y11], [self.x12, self.y12]])
+    # cell - кортеж (x, y)
+    def on_click(self, cell):
+        x = cell[1]
+        y = cell[0]
+        if self.board[cell[1]][cell[0]] == 1 and self.count % 2 == 0:
+            self.board[x] = [1] * self.width
+            for i in range(self.height):
+                self.board[i][y] = 1
+            self.count += 1
+
+        if self.board[cell[1]][cell[0]] == 2 and self.count % 2 != 0:
+            self.board[x] = [2] * self.width
+            for i in range(self.height):
+                self.board[i][y] = 2
+            self.count += 1
+
+    def get_cell(self, mouse_pos):
+        cell_x = (mouse_pos[0] - self.left) // self.cell_size
+        cell_y = (mouse_pos[1] - self.top) // self.cell_size
+        if cell_x < 0 or cell_x >= self.width or cell_y < 0 or cell_y >= self.height:
+            return None
+        return cell_x, cell_y
+
+    def get_click(self, mouse_pos):
+        cell = self.get_cell(mouse_pos)
+        if cell:
+            self.on_click(cell)
+
+    def wichside(self, flag):
+        if flag == 0:
+            for y in range(self.height):
+                for x in range(self.width):
+                    if self.board[y][x] == 0:
+                        pass
+                    else:
+                        for x1 in range(self.width - 1, 0, -1):
+                            if self.board[y][x1 - 1] == 0:
+                                self.board[y][x1 - 1] = self.board[y][x1]
+                                self.board[y][x1] = 0
+                            if self.board[y][x1] == self.board[y][x1 - 1]:
+                                self.board[y][x1 - 1] = 2 * self.board[y][x1]
+                                self.board[y][x1] = 0
+                                self.score += self.board[y][x1 - 1]
+
+        if flag == 1:
+            for y in range(self.height):
+                for x in range(self.width):
+                    if self.board[y][x] == self.width - 1:
+                        pass
+                    else:
+                        for x1 in range(0, self.width - 1):
+                            if self.board[y][x1 + 1] == 0:
+                                self.board[y][x1 + 1] = self.board[y][x1]
+                                self.board[y][x1] = 0
+                            if self.board[y][x1] == self.board[y][x1 + 1]:
+                                self.board[y][x1 + 1] = 2 * self.board[y][x1]
+                                self.board[y][x1] = 0
+                                self.score += self.board[y][x1 + 1]
+        if flag == 2:
+            for y in range(self.height):
+                for x in range(self.width):
+                    if self.board[y][x] == 0:
+                        pass
+                    else:
+                        for y1 in range(self.width - 1, 0, -1):
+                            if self.board[y1 -1][x] == 0:
+                                self.board[y1 - 1][x] = self.board[y1][x]
+                                self.board[y1][x] = 0
+                            if self.board[y1][x] == self.board[y1 - 1][x]:
+                                self.board[y1 - 1][x] = 2 * self.board[y1][x]
+                                self.board[y1][x] = 0
+                                self.score += self.board[y1 - 1][x]
+        if flag == 3:
+            for y in range(self.height):
+                for x in range(self.width):
+                    if self.board[y][x] == 0:
+                        pass
+                    else:
+                        for y1 in range(0, self.width - 1):
+                            if self.board[y1 + 1][x] == 0:
+                                self.board[y1 + 1][x] = self.board[y1][x]
+                                self.board[y1][x] = 0
+                            if self.board[y1][x] == self.board[y1 + 1][x]:
+                                self.board[y1 + 1][x] = 2 * self.board[y1][x]
+                                self.board[y1][x] = 0
+                                self.score += self.board[y1 + 1][x]
+
+        for y in range(self.height):
+            for x in range(self.width):
+                if random.randint(0, 1) == 0:
+                    self.board[y][x] = self.sp[random.randint(0, 1)]
+                    break
+
+    def end(self):
+        with open('best_score.txt', 'w', encoding='utf-8') as file:
+            print(self.best_score, self.score)
+            if self.best_score == 0:
+                text = file.write(f'{int(self.score)}')
+            else:
+                if self.best_score < self.score:
+                    text = file.write(f'{int(self.score)}')
+                if self.best_score == self.score:
+                    text = file.write(f'{int(self.score)}')
 
 
 def main():
     pygame.init()
-    w, h = 201, 201
-    screen = pygame.display.set_mode((w, h))
-    pygame.display.set_caption('Реакция на события от мыши')
-    clock = pygame.time.Clock()
+    w = int(input())
+    h = int(input())
+
     # поле 5 на 7
-    board = vent(w, h)
+    board = Board(w, h)
+    size = 50 * w + 250, 50 * h + 40
+    screen = pygame.display.set_mode(size)
+    pygame.display.set_caption('Реакция на события от мыши')
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                board.end()
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    board.wichside(0)
+                    board.render(screen)
+                if event.key == pygame.K_RIGHT:
+                    board.wichside(1)
+                if event.key == pygame.K_UP:
+                    board.wichside(2)
+                if event.key == pygame.K_DOWN:
+                    board.wichside(3)
         screen.fill((0, 0, 0))
         board.render(screen)
-        clock.tick(70)
         pygame.display.flip()
     pygame.quit()
 
