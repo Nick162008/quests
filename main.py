@@ -25,7 +25,9 @@ class Board:
         with open('best_score.txt', 'r', encoding='utf-8') as file:
             text = file.read()
         self.best_score = int(text)
-        print(self.best_score)
+        self.flag_score = False
+        if self.best_score == 0:
+            self.flag_score = True
         self.score = 0
 
     def render(self, screen):
@@ -76,6 +78,8 @@ class Board:
 
     def wichside(self, flag):
         board = 0
+        flag1 = True
+        board = self.board
         if flag == 0:
             for y in range(self.height):
                 for x in range(self.width):
@@ -89,14 +93,15 @@ class Board:
                             if self.board[y][x1] == self.board[y][x1 - 1]:
                                 self.board[y][x1 - 1] = 2 * self.board[y][x1]
                                 self.board[y][x1] = 0
-                                self.score += self.board[y][x1 - 1]
-            if board == self.board:
-                print('Конец')
-
+                                if self.flag_score:
+                                    self.score += self.board[y][x1 - 1]
+                                    self.best_score += self.board[y][x1 - 1]
+                                else:
+                                    self.score += self.board[y][x1 - 1]
         if flag == 1:
             for y in range(self.height):
                 for x in range(self.width):
-                    if self.board[y][x] == self.width - 1:
+                    if self.board[y][x] == 0:
                         pass
                     else:
                         for x1 in range(0, self.width - 1):
@@ -106,9 +111,11 @@ class Board:
                             if self.board[y][x1] == self.board[y][x1 + 1]:
                                 self.board[y][x1 + 1] = 2 * self.board[y][x1]
                                 self.board[y][x1] = 0
-                                self.score += self.board[y][x1 + 1]
-            if board == self.board:
-                print('Конец')
+                                if self.flag_score:
+                                    self.score += self.board[y][x1 + 1]
+                                    self.best_score += self.board[y][x1 + 1]
+                                else:
+                                    self.score += self.board[y][x1 + 1]
         if flag == 2:
             for y in range(self.height):
                 for x in range(self.width):
@@ -122,11 +129,12 @@ class Board:
                             if self.board[y1][x] == self.board[y1 - 1][x]:
                                 self.board[y1 - 1][x] = 2 * self.board[y1][x]
                                 self.board[y1][x] = 0
-                                self.score += self.board[y1 - 1][x]
-            if board == self.board:
-                print('Конец')
+                                if self.flag_score:
+                                    self.score += self.board[y - 1][x]
+                                    self.best_score += self.board[y - 1][x]
+                                else:
+                                    self.score += self.board[y - 1][x]
         if flag == 3:
-            board = self.board
             for y in range(self.height):
                 for x in range(self.width):
                     if self.board[y][x] == 0:
@@ -139,25 +147,49 @@ class Board:
                             if self.board[y1][x] == self.board[y1 + 1][x]:
                                 self.board[y1 + 1][x] = 2 * self.board[y1][x]
                                 self.board[y1][x] = 0
-                                self.score += self.board[y1 + 1][x]
-            if board == self.board:
-                print('Конец')
-
-            self.board[random.randint(self.width - self.width, self.width - 1)][random.randint(self.width - self.width, self.width - 1)] = self.sp[random.randint(0, 1)]
-
-    def end(self):
-        with open('best_score.txt', 'w', encoding='utf-8') as file:
-            print(self.best_score, self.score)
-            if self.best_score == 0:
-                text = file.write(f'{int(self.score)}')
+                                if self.flag_score:
+                                    self.score += self.board[y1 + 1][x]
+                                    self.best_score += self.board[y1 + 1][x]
+                                else:
+                                    self.score += self.board[y1 + 1][x]
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.board[y][x] == 0 and random.randint(0, 1) == 1:
+                    self.board[y][x] = self.sp[random.randint(0, 1)]
+                    break
             else:
-                if self.best_score < self.score:
+                continue
+            break
+        if board == self.board:
+            print('Конец')
+        self.end(1)
+
+    def end(self, flag):
+        count_flag = 0
+        count_end = 0
+        if flag == 0:
+            with open('best_score.txt', 'w', encoding='utf-8') as file:
+                print(self.best_score, self.score)
+                if self.best_score == 0:
                     text = file.write(f'{int(self.score)}')
-                if self.best_score == self.score:
-                    text = file.write(f'{int(self.score)}')
-                if self.best_score > self.score:
-                    text = file.write(f'{int(self.best_score)}')
-        print(self.board)
+                else:
+                    if self.best_score < self.score:
+                        text = file.write(f'{int(self.score)}')
+                    if self.best_score == self.score:
+                        text = file.write(f'{int(self.score)}')
+                    if self.best_score > self.score:
+                        text = file.write(f'{int(self.best_score)}')
+        if flag == 1:
+            for y in range(self.height):
+                for x in range(self.width):
+                    for x1 in range(self.width - 1, 0, -1):
+                        if self.board[y][x1 - 1] == 0 or self.board[y][x1] == self.board[y][x1 - 1]:
+                            pass
+                        else:
+                            count_end += 1
+            if count_end == 48:
+                count_flag += 1
+        print(count_end)
 
 
 def main():
@@ -174,7 +206,7 @@ def main():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                board.end()
+                board.end(0)
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
