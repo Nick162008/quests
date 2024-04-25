@@ -1,0 +1,137 @@
+import telebot
+import sqlite3
+
+from telebot import StateMemoryStorage
+from telebot.handler_backends import State, StatesGroup
+
+from telebot import custom_filters
+
+TOKEN = "7126662438:AAFFMNflKoH8kzmAUtQPIpc-kOy3dXOl5TM"
+state_storage = StateMemoryStorage()  # you can init here another storage
+
+bot = telebot.TeleBot(TOKEN, state_storage=state_storage)
+
+
+class MyStates(StatesGroup):
+    # Just name variables differently
+    review = State()
+    help = State()  # creating instances of State class is enough from now
+
+
+class Exception:
+    pass
+
+
+def uncorrect(message):
+    return True
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    user = message.from_user.first_name
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_support = telebot.types.KeyboardButton(text="/play")
+    button1 = telebot.types.KeyboardButton(text="/setting")
+    button2 = telebot.types.KeyboardButton(text="/reviews")
+    button3 = telebot.types.KeyboardButton(text="/help")
+    keyboard.add(button_support, button1, button2)
+    keyboard.add(button3)
+    bot.send_message(message.chat.id, f"Здравствуйте {user}! Я помощник по интерфейсу для игры 2048!",
+                     reply_markup=keyboard)
+
+
+@bot.message_handler(commands=['play'])
+def play(message):
+    bot.send_message(message.chat.id,
+                     f"Чтобы начать играть нажмите на '4x4' или '5x5' тем самым выбирая себе размер поля.")
+    file = open("play.png", "rb")
+    bot.send_photo(message.chat.id, file)
+    bot.send_message(message.chat.id, f"Также чтобы выйти с игрового поля нужно нажать на 'Выйти в меню с сохранением'")
+    file = open("play_back.png", "rb")
+    bot.send_photo(message.chat.id, file)
+
+
+@bot.message_handler(commands=['setting'])
+def setting(message):
+    bot.send_message(message.chat.id,
+                     f"Чтобы перейти в найстройки надо нажать на шестерёнку")
+    file = open("start_setting.png", "rb")
+    bot.send_photo(message.chat.id, file)
+    bot.send_message(message.chat.id, "После рядом с пунктом 'Музыка' расположен крестик, именно он включает музыку")
+    file = open("settings.png", "rb")
+    bot.send_photo(message.chat.id, file)
+
+
+@bot.message_handler(commands=['reviews'])
+def reviews(message):
+    bot.send_message(message.chat.id,
+                     "Напишите свое мнение об этом проекте.")
+    bot.set_state(message.from_user.id, MyStates.review, message.chat.id)
+
+
+@bot.message_handler(commands=['help'])
+def helpp(message):
+    bot.send_message(message.chat.id, "Если вами была замечена ошибка, то создайте фото или видео подтверждение"
+                                      " и загрузите его на свой Youtube канал! После отправьте ссылку на свой "
+                                      "Youtube канал")
+    bot.set_state(message.from_user.id, MyStates.help, message.chat.id)
+
+
+@bot.message_handler(state=MyStates.review)
+def name_get(message):
+    """
+    State 1. Will process when user's state is MyStates.name.
+    """
+    con = sqlite3.connect("k.db")
+    cur = con.cursor()
+    nam = message.from_user.id
+    reviewss = message.text
+    cur.execute(f"""INSERT INTO reviews(id, review) VALUES(?, ?)""", (nam, reviewss))
+    con.commit()
+    bot.delete_state(message.from_user.id, message.chat.id)
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_support = telebot.types.KeyboardButton(text="/play")
+    button1 = telebot.types.KeyboardButton(text="/setting")
+    button2 = telebot.types.KeyboardButton(text="/reviews")
+    button3 = telebot.types.KeyboardButton(text="/help")
+    keyboard.add(button_support, button1, button2)
+    keyboard.add(button3)
+    bot.send_message(message.chat.id, "Спасибо за отзыв", reply_markup=keyboard)
+    bot.delete_state(message.from_user.id, message.chat.id)
+
+
+@bot.message_handler(state=MyStates.help)
+def name_get(message):
+    """
+    State 1. Will process when user's state is MyStates.name.
+    """
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_support = telebot.types.KeyboardButton(text="/play")
+    button1 = telebot.types.KeyboardButton(text="/setting")
+    button2 = telebot.types.KeyboardButton(text="/reviews")
+    button3 = telebot.types.KeyboardButton(text="/help")
+    keyboard.add(button_support, button1, button2)
+    keyboard.add(button3)
+    con = sqlite3.connect("k.db")
+    cur = con.cursor()
+    nam = message.from_user.id
+    reviewss = message.text
+    if 'https://www.youtube.com/' in reviewss:
+        cur.execute(f"""INSERT INTO help(id, yt) VALUES(?, ?)""", (nam, reviewss))
+        con.commit()
+        bot.delete_state(message.from_user.id, message.chat.id)
+        bot.send_message(message.chat.id, "Спасибо за помощь", reply_markup=keyboard)
+    else:
+        bot.send_message(message.chat.id, "Не пытайся меня развести", reply_markup=keyboard)
+        bot.delete_state(message.from_user.id, message.chat.id)
+
+
+@bot.message_handler(func=uncorrect)
+def helper(message):
+    bot.reply_to(message, "Некоректный ввод! Пожалуйста используйте клавиатуру с предложенными вариантами вопроса!")
+
+
+bot.add_custom_filter(custom_filters.StateFilter(bot))
+bot.add_custom_filter(custom_filters.IsDigitFilter())
+
+bot.infinity_polling(skip_pending=True)
